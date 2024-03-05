@@ -1,4 +1,6 @@
+import { NextFunction } from 'express'
 import { prisma } from '../../../prisma/prisma.service'
+import { AppError } from '../../shared/error/AppError'
 import { CreateTaskDTO } from '../dto/create-task.dto'
 import { UpdateTaskDTO } from '../dto/update-task.dto'
 
@@ -25,16 +27,20 @@ export class TaskRepository {
         return this.prisma.task.findMany()
     }
 
-    async update(updateTaskDTO: UpdateTaskDTO, id: string) {
-        return this.prisma.task.update({
-            where: { id },
-            data: {
-                ...updateTaskDTO
-            }
-        })
+    async update(updateTaskDTO: UpdateTaskDTO, id: string, next: NextFunction) {
+        try {
+            const updateTask = await this.prisma.task.update({
+                where: { id },
+                data:{ ...updateTaskDTO } 
+            })
+
+            return updateTask
+        }catch (error) {
+            next(new AppError('Task Not Found!', 404))
+        }
     }
 
-    async remove(id: string) {
+    async remove(id: string, next: NextFunction) {
         return this.prisma.task.delete({
             where: { id }
         })
